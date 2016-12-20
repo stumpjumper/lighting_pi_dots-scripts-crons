@@ -1,0 +1,134 @@
+
+(put 'downcase-region 'disabled nil)
+;*************************************************************************
+; Flow Control:  This is makes ^S be ^\ and ^Q be ^^.  This allows software
+;                flow control Xon-Xoff to work.  This means that saving a
+;                file is ^X^\ not ^X^S and so on.  Uncomment if you want to
+;                use it.
+;
+; What is flow Control: On dumb terminals or on macs running terminal 
+;                       emulation ^s and ^q stop and start the flow of
+;                       characters. This will of course interfere with
+;                       emacs.  Now Xterms and consoles don't have this
+;                       flow control problem so you don't have to use it. 
+;(if (load "flow-ctrl" t)
+;    (enable-flow-control t))
+(keyboard-translate ?\C-\\ ?\C-s)
+(keyboard-translate ?\C-^ ?\C-q)
+
+;************************************************************************
+;  Search
+(global-set-key "\eq" 'query-replace-regexp)
+;; swap incremental search with reg exp incremental search
+(global-set-key "\C-s" 'isearch-forward-regexp)
+(global-set-key "\C-r" 'isearch-backward-regexp)
+(global-set-key "\M-\C-s" 'isearch-forward)
+(global-set-key "\M-\C-r" 'isearch-backward)
+
+;************************************************************************
+;; Keybindings
+(global-set-key "\C-m" 'newline-and-indent)
+(global-set-key "\C-j" 'newline)
+(define-key global-map "\C-t"		; Make ^T swap previous two characters
+  '(lambda nil (interactive)
+     (transpose-subr 'forward-char -1)
+     (forward-char 1)))
+
+(global-set-key "\eg" 'goto-line)	  ;M-g => go to line
+(global-set-key "\C-x\C-r" 'write-region) ;^X^R => write region
+(global-set-key "\e$" 'ispell-word)	  ;M-$ => ispell word
+(global-set-key "\e%" 'fill-paragraph)	  ;M-% => fill paragraph
+(keyboard-translate ?\C-h ?\C-?)  ; translate `C-h' to DEL
+(global-set-key "\e\^y" 'insert-buffer)
+(setq suggest-key-bindings nil)
+(global-set-key [(shift f1)] 'call-last-kbd-macro) ; same as C-x e
+(global-set-key "\C-xx" 'copy-to-register) ; same as C-x r x
+(global-set-key "\C-xg" 'insert-register)  ; same as C-x r g
+(global-set-key [f12] 'undo)                     ; F12: undo
+
+
+;************************************************************************
+; Prevent a stray ^X^C from quitting emacs accidently
+(defun my-exit-from-emacs (arg)
+  (interactive "p")
+  (message "arg: %d" arg)
+  (if (or (= (length (frame-list)) 1) (= arg 4))
+      (progn
+	(if (yes-or-no-p "Do you want to exit ")
+	    (save-buffers-kill-emacs)))
+    (if (yes-or-no-p "Do you want to delete this frame (do C-U C-X C-C to exit) ")
+	(delete-frame))))
+
+(global-set-key "\C-x\C-c" 'my-exit-from-emacs)
+
+;************************************************************************
+;; VARIABLES:
+;;(setq-default indent-tabs-mode t)  ; Use tabs to indent anywhere
+(setq-default indent-tabs-mode nil); Do not use tabs to indent anywhere
+(setq-default tab-width 8)         ; If there are tabs, make them 8 spaces
+ (setq sun-esc-bracket t)          ; allows for function keys
+(setq inhibit-startup-message t)   ; don't print startup message
+(setq default-case-fold-search t)  ; If nil, when searching, UPPER and lower case is
+                                   ; different.  Change the nil to t make
+                                   ; UPPER and lower case the same.
+(setq track-eol-on-^N-^P 0)        ; don't track end of line with the
+                                   ; up/down line commands.
+(setq wrap-long-lines 1)           ; Wrap long lines in auto-fill mode.
+(setq ange-ftp-make-backup-files t); Make backup files.
+(line-number-mode 't)              ; Show current line number
+(column-number-mode 't)            ; Show current column number
+(transient-mark-mode 1)            ; Highlight selected region
+(show-paren-mode)                  ; Show the matching paren
+
+;************************************************************************
+;; Cool buffer switching mode
+(iswitchb-mode 1) ;; Mac (new way)
+;; (iswitchb-default-keybindings) ;; Linux (old way)
+(setq iswitchb-default-method 'samewindow) ; How to switch to new buffer when using `iswitchb-buffer'.
+                                           ; Do "M-x describe-variable iswitchb-default-method" for more info
+
+;************************************************************************
+;  Allow Narrow to region and Eval-expression to work
+(put 'narrow-to-region 'disabled nil)
+(put 'eval-expression 'disabled nil)
+
+;************************************************************************
+; Compilation
+(define-key global-map "\C-xc" 'compile)
+(setq compile-command "cd ..; make test; if [ $? == '0' ]; then echo ':-) :-) :-) Success :-) :-) :-) ' ; else echo '!!!! Failure !!!!'; fi")
+
+
+;************************************************************************
+; Grep
+(setq grep-command "grep -n ") ; Default is "grep -n -e "
+
+;************************************************************************
+; Align equals
+(autoload 'align-equals "align-eq" nil t)
+(define-key global-map "\C-c\="    'align-equals)
+
+;*************************************************************************
+; This swithes between a .h and .C souce code pair
+(defun find-file-pair ()
+  (interactive)
+  (let ((file-name (buffer-file-name)))
+    (cond ((string-match "\\(.*\\)\.cpp$" file-name)
+	   (setq file-name (concat (match-string 1 file-name) 
+				   ""
+				   (match-string 2 file-name)
+				   ".h")))
+	  ((string-match "\\(.*\\)\.h$" file-name)
+	   (setq file-name (concat (match-string 1 file-name) 
+				   ""
+				   (match-string 2 file-name)
+				   ".cpp")))
+	  )
+    (find-file file-name)
+    ))
+
+(global-set-key "\C-xp" 'find-file-pair)
+
+; Go to bottom of other buffer, should be useful when compiling
+(fset 'bot' "\C-xo\M->")
+(fset 'bot
+   "o>o")
