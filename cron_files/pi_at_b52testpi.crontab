@@ -1,0 +1,2 @@
+@reboot	sleep 60; $HOME/projects/arduino-interaction/calculateLengthOfNight/startPICommunications.py /dev/ttyACM0 arduino_screen_1
+@reboot	sleep 70; $HOME/projects/arduino-interaction/calculateLengthOfNight/startPICommunications.py /dev/ttyACM1 arduino_screen_2
