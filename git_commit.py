@@ -36,12 +36,20 @@ usage: %prog [-h|--help] [options] message file_1 [file_2 ...]
                     dest="noOp",
                     help=help)
 
-  help="Quiet mode.  Do not ask for conformation or echo any information"
+  help ="Quiet mode.  Do not ask for conformation or echo any information, "
+  help+="including the log"
   parser.add_option("-q", "--quiet",
                     action="store_true", 
                     default=False,
                     dest="quiet",
                     help=help)
+
+#  help="Show last log message after commit command is executed"
+#  parser.add_option("-l", "--log",
+#                    action="store_true", 
+#                    default=False,
+#                    dest="showLog",
+#                    help=help)
   
   (cmdLineOptions, cmdLineArgs) = parser.parse_args(cmdLineArgs)
   clo = cmdLineOptions
@@ -97,6 +105,9 @@ def main(cmdLineArgs):
         print cmdText
       print
       call(cmdList)
+      if not clo.quiet:
+        print
+        call(["git","--no-pager","log","-1"])
     else:
       print "Would have made the call:"
       print cmdText
