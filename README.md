@@ -8,6 +8,8 @@ Science and History](http://www.nuclearmuseum.org "Nuclear Museum home page")
 cd $HOME
 mv .bash_aliases .bash_aliases.orig
 mv .emacs .emacs.orig
+mkdir bin
 ln -s lighting_pi_dots-scripts-crons/.bash_aliases_simple .bash_aliases
 ln -s lighting_pi_dots-scripts-crons/.emacs_simple .emacs
+ln -s lighting_pi_dots-scripts-crons/git_commit.py bin/git_commit
 ```
