@@ -10,6 +10,7 @@ alias lu='              echo cd lucky7; cd $HOME/projects/python_projects/calcul
 alias ar='              echo cd arduino; cd $HOME/projects/arduino-mock-master/'
 # list commands
 lsopt=" -aFh"
+export COLOR_OPT='--color=auto'
 alias l='	ls $lsopt -C  $COLOR_OPT'
 alias lf='	ls $lsopt -C  $COLOR_OPT'
 alias ls='  ls $lsopt     $COLOR_OPT'
