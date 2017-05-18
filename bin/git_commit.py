@@ -44,6 +44,14 @@ usage: %prog [-h|--help] [options] message file_1 [file_2 ...]
                     dest="quiet",
                     help=help)
 
+  help ="Force.  Do not ask for conformation, just execute. "
+  help+="Note: Quiet mode forces also"
+  parser.add_option("-f", "--force",
+                    action="store_true", 
+                    default=False,
+                    dest="force",
+                    help=help)
+
 #  help="Show last log message after commit command is executed"
 #  parser.add_option("-l", "--log",
 #                    action="store_true", 
@@ -71,11 +79,15 @@ def main(cmdLineArgs):
   message  = cla[0]
   fileList = cla[1:]
 
+  shortNameFileList = []
+  for filename in fileList:
+    shortNameFileList.append(os.path.basename(filename))
+
   if clo.verbose:
     print "message: ", message
     print "fileList:", fileList
 
-  msg = '"' + ", ".join(fileList) + ": " + message + '"'
+  msg = '"' + ", ".join(shortNameFileList) + ": " + message + '"'
 
   cmdList = ["git","commit","-m"]
   cmdList.append(msg)
@@ -87,18 +99,21 @@ def main(cmdLineArgs):
   if not clo.quiet:
     print "Command is:"
     print cmd
-    answer = raw_input("Execute [y/n]? ")
-    if not answer:
-      answer = "n"
-    if answer[0].lower() != 'y':
-      execute = False
-      print "Exiting..."
+    if not clo.force:
+      answer = raw_input("Execute [y/n]? ")
+      if not answer:
+        answer = "n"
+      if answer[0].lower() != 'y':
+        execute = False
   elif clo.verbose:
     print "Command:"
     print cmd
 
   cmdText = "call(%s)" % cmdList
-  if execute:
+  if not execute:
+    print "Exiting..."
+    return
+  else:
     if not clo.noOp:
       if clo.verbose:
         print "Executing:"
@@ -107,7 +122,7 @@ def main(cmdLineArgs):
       call(cmdList)
       if not clo.quiet:
         print
-        call(["git","--no-pager","log","-1"])
+        call(["git","--no-pager","log","--name-only","-1"])
     else:
       print "Would have made the call:"
       print cmdText
