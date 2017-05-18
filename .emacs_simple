@@ -46,6 +46,11 @@
 (global-set-key "\C-xg" 'insert-register)  ; same as C-x r g
 (global-set-key [f12] 'undo)                     ; F12: undo
 
+;;***********************************************************************
+;; A revert buffer command that doesn't ask questions
+(defun rb()
+  (interactive)
+    (revert-buffer t t))
 
 ;************************************************************************
 ; Prevent a stray ^X^C from quitting emacs accidently
