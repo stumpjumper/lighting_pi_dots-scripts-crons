@@ -12,5 +12,6 @@ mv .emacs .emacs.orig
 mkdir bin
 ln -s lighting_pi_dots-scripts-crons/.bash_aliases_simple .bash_aliases
 ln -s lighting_pi_dots-scripts-crons/.emacs_simple .emacs
-ln -s lighting_pi_dots-scripts-crons/bin/git_commit.py bin/git_commit
+cd bin
+ln -s ../lighting_pi_dots-scripts-crons/bin/git_commit.py git_commit
 ```
