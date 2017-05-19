@@ -1,2 +1,0 @@
-@reboot	$HOME/bin/cleanup_chromium_preferences
-#@hourly $HOME/bin/cleanup_chromium_preferences
