@@ -1,0 +1,7 @@
+# NOTE: May need to change /dev/ttyACM0 as follows:
+# Serial port to connect to. Do a 
+# "dmesg | grep tty" and look at last serial port added.
+# Usually looks something like /dev/ttyACM0 or /dev/ttyUSB0
+# and is at the bottom of the grep output.
+
+@reboot	sleep 60; $HOME/projects/arduino-interaction/calculateLengthOfNight/startPICommunications.py /dev/ttyACM0 arduino_screen
