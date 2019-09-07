@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys, os, re, datetime
+import texttable as tt
 from optparse import OptionParser
 import subprocess
 
@@ -69,16 +70,53 @@ def main(cmdLineArgs):
   if clo.verbose:
     print ("\n","devices = ", devices)
 
-  print ("Connected devices:")
+  connectedTable = tt.Texttable()
+  headings = ['Name','IP','Connected Time (h:m:s)','Inactive Time (sec)']
+  connectedTable.header(headings)
+  connectedTable.set_cols_align(["l", "l", "c", "c"])
+  names          = []
+  ips            = []
+  connectedTimes = []
+  inactiveSecs   = []
   for device in devices.values():
-    name          = device["Name"]
-    ip            = device["IP"]
-    connectedTime = device["ConnectedTime"]
-    inactiveSec   = device["InactiveSec"]
-    msg = "%s: Connected for %s [h:m:s], Inactive for %s sec" % \
-      (name, connectedTime, inactiveSec)
-    print(msg)
+    names          .append(device["Name"])
+    ips            .append(device["IP"])
+    connectedTimes .append(device["ConnectedTime"])
+    inactiveSecs   .append(device["InactiveSec"])
+  
+  for row in zip(names,ips,connectedTimes,inactiveSecs):
+    connectedTable.add_row(row)
     
+  tableString = connectedTable.draw()
+  print ("Connected devices:")
+  print (tableString)
+
+  dhcpLeaseTalble = tt.Texttable()
+  headings = ['Name','IP','MAC','Connected']
+  dhcpLeaseTalble.header(headings)
+  dhcpLeaseTalble.set_cols_align(["l", "l", "l", "c"])
+  names          = []
+  ips            = []
+  MACAdds        = []
+  connecteds     = []
+  for MACAdd, value in deviceInfo.items():
+    names          .append(value["Name"])
+    ips            .append(value["IP"])
+    MACAdds        .append(MACAdd)
+    connected = ""
+    if MACAdd in devices:
+      connected = "*"
+    connecteds     .append(connected)
+
+
+  for row in zip(names,ips,MACAdds,connecteds):
+    dhcpLeaseTalble.add_row(row)
+    
+  tableString = dhcpLeaseTalble.draw()
+  print ()
+  print ("DHCP Leases:")
+  print (tableString)    
+  
 
 if (__name__ == '__main__'):
   main(sys.argv[1:])
