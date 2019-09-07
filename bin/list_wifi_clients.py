@@ -38,7 +38,7 @@ def main(cmdLineArgs):
   result = subprocess.run(['iw','wlan0','station','dump'],check=True,stdout=subprocess.PIPE)
   lines = bytes.decode(result.stdout).split(sep="\n")
   for line in lines:
-    matchMAC       = re.search(r'Station\s+(..:..:..:..:..:..)',line)
+    matchMAC       = re.search(r'Station\s+(\w\w:\w\w:\w\w:\w\w:\w\w:\w\w)',line)
     matchInactiveMs  = re.search(r'inactive time:\s+(\d+)\s+ms',line)
     matchConnectedSec = re.search(r'connected time:\s+(\d+)\s+seconds',line)
     
