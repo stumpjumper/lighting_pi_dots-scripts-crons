@@ -62,9 +62,9 @@ def main(cmdLineArgs):
   if clo.verbose:
     print ("\n","deviceInfo = ",deviceInfo)
 
-  for device in devices.values():
-    device["Name"] = deviceInfo[MACAdd]["Name"] 
-    device["IP"] = deviceInfo[MACAdd]["IP"] 
+  for MACAdd, device in devices.items():
+    device["Name"] = deviceInfo[MACAdd]["Name"]
+    device["IP"]   = deviceInfo[MACAdd]["IP"] 
 
   if clo.verbose:
     print ("\n","devices = ", devices)
