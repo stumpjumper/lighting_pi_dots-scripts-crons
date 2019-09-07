@@ -32,43 +32,74 @@ def setupCmdLineArgs(cmdLineArgs):
 def main(cmdLineArgs):
   (clo, cla) = setupCmdLineArgs(cmdLineArgs)
 
+  reMAC          = re.compile(r'Station\s+(\w\w:\w\w:\w\w:\w\w:\w\w:\w\w)')
+  reInactiveMs   = re.compile(r'inactive time:\s+(\d+)\s+ms')
+  reConnectedSec = re.compile(r'connected time:\s+(\d+)\s+seconds')
+  
+  deviceInfo = {}
+  dhcpLeases = open('/var/lib/misc/dnsmasq.leases','r')
+  for line in dhcpLeases:
+    info = line.split(" ")
+    deviceInfo[info[1]] = {"Name":info[3],"IP":info[2],
+                           "InactiveSec":"-","ConnectedTime":"-"}
+
+  if clo.verbose:
+    print ("\n","deviceInfo after reading dnsmasq.leases:","\n",deviceInfo)
+
   devices={}
   MACAdd = ""
 
   result = subprocess.run(['iw','wlan0','station','dump'],check=True,stdout=subprocess.PIPE)
   lines = bytes.decode(result.stdout).split(sep="\n")
   for line in lines:
-    matchMAC       = re.search(r'Station\s+(\w\w:\w\w:\w\w:\w\w:\w\w:\w\w)',line)
-    matchInactiveMs  = re.search(r'inactive time:\s+(\d+)\s+ms',line)
-    matchConnectedSec = re.search(r'connected time:\s+(\d+)\s+seconds',line)
+    matchMAC          = reMAC         .search(line)
+    matchInactiveMs   = reInactiveMs  .search(line)
+    matchConnectedSec = reConnectedSec.search(line)
+
+    errorMsg = ""
     
     if matchMAC:
       MACAdd = matchMAC.groups()[0]
-      devices[MACAdd] = {}
+      devices[MACAdd] = {"InactiveSec":"Not Found","ConnectedTime":"Not Found"}
     if matchInactiveMs:
-      devices[MACAdd]["InactiveSec"] = int(matchInactiveMs.groups()[0])/1000.0
+      inactiveSec = int(matchInactiveMs.groups()[0])/1000.0
+      if MACAdd in devices:
+        devices[MACAdd]["InactiveSec"] = inactiveSec
+      else:
+        errorMsg = (MACAdd, "devices")
+      if MACAdd in deviceInfo:
+        deviceInfo[MACAdd]["InactiveSec"] = inactiveSec
+      else:
+        errorMsg = (MACAdd, "deviceInfo")
     if matchConnectedSec:
-      seconds = int(matchConnectedSec.groups()[0])
-      devices[MACAdd]["ConnectedTime"] = str(datetime.timedelta(seconds=seconds))
+      connectedSec = int(matchConnectedSec.groups()[0])
+      connectedTime = str(datetime.timedelta(seconds=connectedSec))
+      if MACAdd in devices:
+        devices[MACAdd]["ConnectedTime"] = connectedTime
+      else:
+        errorMsg = (MACAdd, "devices")
+      if MACAdd in deviceInfo:
+        deviceInfo[MACAdd]["ConnectedTime"] = connectedTime
+      else:
+        errorMsg = (MACAdd, "deviceInfo")
+
+    if errorMsg:
+      print("Error: Could not find key %s in dictionary '%s'" \
+            % (errorMsg[0],errorMsg[1]))
 
   if clo.verbose:
-    print ("devices = ", devices)
-
-  deviceInfo = {}
-  dhcpLeases = open('/var/lib/misc/dnsmasq.leases','r')
-  for line in dhcpLeases:
-    info = line.split(" ")
-    deviceInfo[info[1]] = {"Name":info[3],"IP":info[2]}
+    print ("\n","devices after executing iw command:","\n",devices)
 
   if clo.verbose:
-    print ("\n","deviceInfo = ",deviceInfo)
+    print ("\n","deviceInfo after adding inactive and connected time ",
+           deviceInfo)
 
   for MACAdd, device in devices.items():
     device["Name"] = deviceInfo[MACAdd]["Name"]
     device["IP"]   = deviceInfo[MACAdd]["IP"] 
 
   if clo.verbose:
-    print ("\n","devices = ", devices)
+    print ("\n","device after adding name and ip:","\n",device)
 
   connectedTable = tt.Texttable()
   headings = ['Name','IP','Connected Time (h:m:s)','Inactive Time (sec)']
@@ -92,24 +123,23 @@ def main(cmdLineArgs):
   print (tableString)
 
   dhcpLeaseTalble = tt.Texttable()
-  headings = ['Name','IP','MAC','Connected']
+  headings = ['Name','IP','MAC','Connected Time (h:m:s)','Inactive Time (sec)']
   dhcpLeaseTalble.header(headings)
-  dhcpLeaseTalble.set_cols_align(["l", "l", "l", "c"])
+  dhcpLeaseTalble.set_cols_align(["l", "l", "l", "c","c"])
+  dhcpLeaseTalble.set_cols_width([10,12,17,14,10])
   names          = []
   ips            = []
   MACAdds        = []
-  connecteds     = []
-  for MACAdd, value in deviceInfo.items():
+  connectedTimes = []
+  inactiveSecs   = []
+  for MACAdd, value in sorted(deviceInfo.items()):
     names          .append(value["Name"])
     ips            .append(value["IP"])
     MACAdds        .append(MACAdd)
-    connected = ""
-    if MACAdd in devices:
-      connected = "*"
-    connecteds     .append(connected)
+    connectedTimes .append(value["ConnectedTime"])
+    inactiveSecs   .append(value["InactiveSec"])
 
-
-  for row in zip(names,ips,MACAdds,connecteds):
+  for row in zip(names,ips,MACAdds,connectedTimes,inactiveSecs):
     dhcpLeaseTalble.add_row(row)
     
   tableString = dhcpLeaseTalble.draw()
