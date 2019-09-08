@@ -33,8 +33,10 @@ class ListWiFiClients(object):
   def __init__(self, verbose=False):
     self.verbose = verbose
 
-    self.deviceInfo = None
-    self.devices    = None
+    self.deviceInfo      = None
+    self.devices         = None
+    self.connectedTable  = None
+    self.dhcpLeaseTalble = None
 
     self.reMAC          = re.compile(r'Station\s+(\w\w:\w\w:\w\w:\w\w:\w\w:\w\w)')
     self.reInactiveMs   = re.compile(r'inactive time:\s+(\d+)\s+ms')
@@ -111,6 +113,11 @@ class ListWiFiClients(object):
     self.devices    = devices
       
   def createDevicesTable(self):
+
+    assert self.devices,
+    "Calling createDevicesTable() before self.devices is set. "+\
+    "Maybe forgot to call getData() first?"
+
     connectedTable = tt.Texttable()
     headings = ['Name','IP','Connected Time (h:m:s)','Inactive Time (sec)']
     connectedTable.header(headings)
@@ -130,11 +137,11 @@ class ListWiFiClients(object):
 
     self.connectedTable = connectedTable
       
-  def printDevicesTable(self,stream=sys.stdin):
-    tableString = self.connectedTable.draw()
-    print(tableString, file=stream)
-
   def createDeviceInfoTable(self):
+    assert self.deviceInfo
+    "Calling createDeviceInfoTable() before self.deviceInfo is set. "+\
+    "Maybe forgot to call getData() first?"
+
     dhcpLeaseTalble = tt.Texttable()
     headings = ['Name','IP','MAC','Connected Time (h:m:s)','Inactive Time (sec)']
     dhcpLeaseTalble.header(headings)
@@ -145,7 +152,7 @@ class ListWiFiClients(object):
     MACAdds        = []
     connectedTimes = []
     inactiveSecs   = []
-    for MACAdd, value in sorted(deviceInfo.items()):
+    for MACAdd, value in sorted(self.deviceInfo.items()):
       names          .append(value["Name"])
       ips            .append(value["IP"])
       MACAdds        .append(MACAdd)
@@ -157,18 +164,31 @@ class ListWiFiClients(object):
 
     self.dhcpLeaseTalble = dhcpLeaseTalble
     
+  def getDevicesTableString(self):
+    return self.connectedTable.draw()
+
+  def printDevicesTable(self,stream=sys.stdin):
+    tableString = getDevicesTableString()
+    print(tableString, file=stream)
+
+  def getDeviceInfoTableString(self):
+    return = dhcpLeaseTalble.draw()
+
   def printDeviceInfoTable(self,stream):
-    tableString = dhcpLeaseTalble.draw()
+    tableString = getDeviceInfoTableString():
     print(tableString, file=stream)
 
 if (__name__ == '__main__'):
-  main(sys.argv[1:])
+  (clo, cla) = setupCmdLineArgs(sys.argv[1:])
+
+  myListWiFiClients = ListWiFiClients(clo.verbose)
+
+  myListWiFiClients()
 
   print ()
   print ("Connected devices:")
+  myListWiFiClients.
+
+  print ()
   print ("DHCP Leases:")
-  
-
-
-  
-
+  myListWiFiClients.
