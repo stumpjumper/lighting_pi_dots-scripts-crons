@@ -34,8 +34,8 @@ class ListWiFiClients(object):
     self.verbose = verbose
 
     self.dhcpLeases      = None
-    self.conDevices         = None
-    self.conDevicesTable  = None
+    self.conDevices      = None
+    self.conDevicesTable = None
     self.dhcpLeasesTable = None
 
     self.reMAC          = re.compile(r'Station\s+(\w\w:\w\w:\w\w:\w\w:\w\w:\w\w)')
