@@ -33,126 +33,126 @@ class ListWiFiClients(object):
   def __init__(self, verbose=False):
     self.verbose = verbose
 
-    self.deviceInfo      = None
-    self.devices         = None
-    self.connectedTable  = None
-    self.dhcpLeaseTalble = None
+    self.dhcpLeases      = None
+    self.conDevices         = None
+    self.conDevicesTable  = None
+    self.dhcpLeasesTable = None
 
     self.reMAC          = re.compile(r'Station\s+(\w\w:\w\w:\w\w:\w\w:\w\w:\w\w)')
     self.reInactiveMs   = re.compile(r'inactive time:\s+(\d+)\s+ms')
     self.reConnectedSec = re.compile(r'connected time:\s+(\d+)\s+seconds')
 
-  def getData(self):
-
-    deviceInfo = {}
-    dhcpLeases = open('/var/lib/misc/dnsmasq.leases','r')
-    for line in dhcpLeases:
+  def loadData(self):
+    dhcpLeases = {}
+    dhcpLeasesFile = open('/var/lib/misc/dnsmasq.leases','r')
+    for line in dhcpLeasesFile:
       info = line.split(" ")
-      deviceInfo[info[1]] = {"Name":info[3],"IP":info[2],
+      dhcpLeases[info[1]] = {"Name":info[3],"IP":info[2],
                              "InactiveSec":"-","ConnectedTime":"-"}
 
-    if self.verbose:
-      print ("\n","deviceInfo after reading dnsmasq.leases:","\n",deviceInfo)
+    dhcpLeasesFile.close()
 
-    devices={}
+    if self.verbose:
+      print ("\n","dhcpLeases after reading dnsmasq.leases:","\n",dhcpLeases)
+
+    conDevices={}
     MACAdd = ""
 
     result = subprocess.run(['iw','wlan0','station','dump'],check=True,stdout=subprocess.PIPE)
     lines = bytes.decode(result.stdout).split(sep="\n")
     for line in lines:
-      matchMAC          = reMAC         .search(line)
-      matchInactiveMs   = reInactiveMs  .search(line)
-      matchConnectedSec = reConnectedSec.search(line)
+      matchMAC          = self.reMAC         .search(line)
+      matchInactiveMs   = self.reInactiveMs  .search(line)
+      matchConnectedSec = self.reConnectedSec.search(line)
 
       errorMsg = ""
       
       if matchMAC:
         MACAdd = matchMAC.groups()[0]
-        devices[MACAdd] = {"InactiveSec":"Not Found","ConnectedTime":"Not Found"}
+        conDevices[MACAdd] = {"InactiveSec":"Not Found","ConnectedTime":"Not Found"}
       if matchInactiveMs:
         inactiveSec = int(matchInactiveMs.groups()[0])/1000.0
-        if MACAdd in devices:
-          devices[MACAdd]["InactiveSec"] = inactiveSec
+        if MACAdd in conDevices:
+          conDevices[MACAdd]["InactiveSec"] = inactiveSec
         else:
-          errorMsg = (MACAdd, "devices")
-        if MACAdd in deviceInfo:
-          deviceInfo[MACAdd]["InactiveSec"] = inactiveSec
+          errorMsg = (MACAdd, "conDevices")
+        if MACAdd in dhcpLeases:
+          dhcpLeases[MACAdd]["InactiveSec"] = inactiveSec
         else:
-          errorMsg = (MACAdd, "deviceInfo")
+          errorMsg = (MACAdd, "dhcpLeases")
       if matchConnectedSec:
         connectedSec = int(matchConnectedSec.groups()[0])
         connectedTime = str(datetime.timedelta(seconds=connectedSec))
-        if MACAdd in devices:
-          devices[MACAdd]["ConnectedTime"] = connectedTime
+        if MACAdd in conDevices:
+          conDevices[MACAdd]["ConnectedTime"] = connectedTime
         else:
-          errorMsg = (MACAdd, "devices")
-        if MACAdd in deviceInfo:
-          deviceInfo[MACAdd]["ConnectedTime"] = connectedTime
+          errorMsg = (MACAdd, "conDevices")
+        if MACAdd in dhcpLeases:
+          dhcpLeases[MACAdd]["ConnectedTime"] = connectedTime
         else:
-          errorMsg = (MACAdd, "deviceInfo")
+          errorMsg = (MACAdd, "dhcpLeases")
 
       if errorMsg:
         print("Error: Could not find key %s in dictionary '%s'" \
               % (errorMsg[0],errorMsg[1]))
 
     if self.verbose:
-      print ("\n","devices after executing iw command:","\n",devices)
+      print ("\n","conDevices after executing iw command:","\n",conDevices)
 
     if self.verbose:
-      print ("\n","deviceInfo after adding inactive and connected time ",
-             deviceInfo)
+      print ("\n","dhcpLeases after adding inactive and connected time ",
+             dhcpLeases)
 
-    for MACAdd, device in devices.items():
-      device["Name"] = deviceInfo[MACAdd]["Name"]
-      device["IP"]   = deviceInfo[MACAdd]["IP"] 
+    for MACAdd, device in conDevices.items():
+      device["Name"] = dhcpLeases[MACAdd]["Name"]
+      device["IP"]   = dhcpLeases[MACAdd]["IP"] 
 
     if self.verbose:
       print ("\n","device after adding name and ip:","\n",device)
 
-    self.deviceInfo = deviceInfo
-    self.devices    = devices
+    self.dhcpLeases = dhcpLeases
+    self.conDevices = conDevices
       
-  def createDevicesTable(self):
+  def createConDevicesTable(self):
 
-    assert self.devices,
-    "Calling createDevicesTable() before self.devices is set. "+\
-    "Maybe forgot to call getData() first?"
+    if not self.conDevices:
+      self.loadData()
 
-    connectedTable = tt.Texttable()
+    conDevicesTable = tt.Texttable()
     headings = ['Name','IP','Connected Time (h:m:s)','Inactive Time (sec)']
-    connectedTable.header(headings)
-    connectedTable.set_cols_align(["l", "l", "c", "c"])
+    conDevicesTable.header(headings)
+    conDevicesTable.set_cols_align(["l", "l", "c", "c"])
     names          = []
     ips            = []
     connectedTimes = []
     inactiveSecs   = []
-    for device in self.devices.values():
+    for device in self.conDevices.values():
       names          .append(device["Name"])
       ips            .append(device["IP"])
       connectedTimes .append(device["ConnectedTime"])
       inactiveSecs   .append(device["InactiveSec"])
   
     for row in zip(names,ips,connectedTimes,inactiveSecs):
-      connectedTable.add_row(row)
+      conDevicesTable.add_row(row)
 
-    self.connectedTable = connectedTable
+    self.conDevicesTable = conDevicesTable
       
-  def createDeviceInfoTable(self):
-    assert self.deviceInfo
-    "Calling createDeviceInfoTable() before self.deviceInfo is set. "+\
-    "Maybe forgot to call getData() first?"
+  def createDHCPLeasesTable(self):
 
-    dhcpLeaseTalble = tt.Texttable()
+    if not self.dhcpLeasesTable:
+      self.loadData()
+
+    dhcpLeasesTable = tt.Texttable()
     headings = ['Name','IP','MAC','Connected Time (h:m:s)','Inactive Time (sec)']
-    dhcpLeaseTalble.header(headings)
-    dhcpLeaseTalble.set_cols_align(["l", "l", "l", "c","c"])
-    dhcpLeaseTalble.set_cols_width([10,12,17,14,10])
+    dhcpLeasesTable.header(headings)
+    dhcpLeasesTable.set_cols_align(["l", "l", "l", "c","c"])
+    dhcpLeasesTable.set_cols_width([10,12,17,14,10])
     names          = []
     ips            = []
     MACAdds        = []
     connectedTimes = []
     inactiveSecs   = []
-    for MACAdd, value in sorted(self.deviceInfo.items()):
+    for MACAdd, value in sorted(self.dhcpLeases.items()):
       names          .append(value["Name"])
       ips            .append(value["IP"])
       MACAdds        .append(MACAdd)
@@ -160,22 +160,26 @@ class ListWiFiClients(object):
       inactiveSecs   .append(value["InactiveSec"])
 
     for row in zip(names,ips,MACAdds,connectedTimes,inactiveSecs):
-      dhcpLeaseTalble.add_row(row)
+      dhcpLeasesTable.add_row(row)
 
-    self.dhcpLeaseTalble = dhcpLeaseTalble
+    self.dhcpLeasesTable = dhcpLeasesTable
     
-  def getDevicesTableString(self):
-    return self.connectedTable.draw()
+  def getConDevicesTableString(self):
+    if not self.conDevicesTable:
+      self.createConDevicesTable()
+    return self.conDevicesTable.draw()
 
-  def printDevicesTable(self,stream=sys.stdin):
-    tableString = getDevicesTableString()
+  def printConDevicesTable(self,stream=sys.stdout):
+    tableString = self.getConDevicesTableString()
     print(tableString, file=stream)
 
-  def getDeviceInfoTableString(self):
-    return = dhcpLeaseTalble.draw()
+  def getDHCPLeasesTableString(self):
+    if not self.dhcpLeasesTable:
+      self.createDHCPLeasesTable()
+    return self.dhcpLeasesTable.draw()
 
-  def printDeviceInfoTable(self,stream):
-    tableString = getDeviceInfoTableString():
+  def printDHCPLeasesTable(self,stream=sys.stdout):
+    tableString = self.getDHCPLeasesTableString()
     print(tableString, file=stream)
 
 if (__name__ == '__main__'):
@@ -183,12 +187,9 @@ if (__name__ == '__main__'):
 
   myListWiFiClients = ListWiFiClients(clo.verbose)
 
-  myListWiFiClients()
-
-  print ()
-  print ("Connected devices:")
-  myListWiFiClients.
+  print ("Connected conDevices:")
+  myListWiFiClients.printConDevicesTable()
 
   print ()
   print ("DHCP Leases:")
-  myListWiFiClients.
+  myListWiFiClients.printDHCPLeasesTable()
