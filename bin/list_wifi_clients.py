@@ -48,7 +48,8 @@ class ListWiFiClients(object):
     for line in dhcpLeasesFile:
       info = line.split(" ")
       dhcpLeases[info[1]] = {"Name":info[3],"IP":info[2],
-                             "InactiveSec":"-","ConnectedTime":"-"}
+                             "ConnectedTime":"Not Connected",
+                             "InactiveSec":"-"}
 
     dhcpLeasesFile.close()
 
