@@ -35,6 +35,12 @@ usage: %prog [-h|--help] [options] message file_1 [file_2 ...]
                     default=False,
                     dest="noOp",
                     help=help)
+  help="Pass the 'commit all changed files', -a/--all flag, to git commit"
+  parser.add_option("-a", "--all",
+                    action="store_true", 
+                    default=False,
+                    dest="all",
+                    help=help)
 
   help ="Quiet mode.  Do not ask for conformation or echo any information, "
   help+="including the log"
@@ -67,7 +73,10 @@ usage: %prog [-h|--help] [options] message file_1 [file_2 ...]
     for index in range(0,len(cmdLineArgs)):
       print "cmdLineArgs[%s] = '%s'" % (index, cmdLineArgs[index])
 
-  if len(cmdLineArgs) < 2:
+  if len(cmdLineArgs) > 1 and cmdLineOptions.all:
+    parser.error("No files can be specified when the -a/-all flag is "+\
+    "used")
+  elif len(cmdLineArgs) < 2 and not cmdLineOptions.all:
     parser.error("A message and at least one file must be specified on the "+\
     "command line")
 
@@ -89,7 +98,10 @@ def main(cmdLineArgs):
 
   msg = '"' + ", ".join(shortNameFileList) + ": " + message + '"'
 
-  cmdList = ["git","commit","-m"]
+  if not clo.all:
+    cmdList = ["git","commit","-m"]
+  else:
+    cmdList = ["git","commit","-a","-m"]
   cmdList.append(msg)
   cmdList += fileList
 
