@@ -25,8 +25,10 @@ alias pretty=' 		pretty +enddo -uc P -cap G -lc KVDCF -is 2 -ci 2 -xs 100 -cnc "
 alias rs='              set noglob; eval `resize`; unset noglob'
 alias up='		cd ..'
 alias c='               pyCalc'
-alias vnc_start_server_1='vncserver :1 -randr=1280x1024'
-alias vnc_start_server_2='vncserver :2 -randr=1280x1024'
+alias vncserver_start_1='vncserver :1 -randr=1280x1024'
+alias vncserver_start_2='vncserver :2 -randr=1280x1024'
+alias vncserver_kill_1='vncserver -kill :1'
+alias vncserver_kill_2='vncserver -kill :2'
 
 psg () {
     if [ "x$PS_CMD" = x ]; then
