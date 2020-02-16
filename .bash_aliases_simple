@@ -30,6 +30,13 @@ alias vncserver_start_2='vncserver :2 -randr=1280x1024'
 alias vncserver_kill_1='vncserver -kill :1'
 alias vncserver_kill_2='vncserver -kill :2'
 
+if [ "x$PS_FLAGS" = x ]; then
+  export PS_FLAGS="-ef"
+fi
+if [ "x$PS_CMD" = x ]; then
+  export PS_CMD=ps
+fi
+
 psg () {
     if [ "x$PS_CMD" = x ]; then
       PS_CMD=ps
