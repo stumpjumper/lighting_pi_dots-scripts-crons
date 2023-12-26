@@ -69,9 +69,9 @@ usage: %prog [-h|--help] [options] message file_1 [file_2 ...]
   clo = cmdLineOptions
 
   if cmdLineOptions.verbose:
-    print "cmdLineOptions:",cmdLineOptions
+    print ("cmdLineOptions:",cmdLineOptions)
     for index in range(0,len(cmdLineArgs)):
-      print "cmdLineArgs[%s] = '%s'" % (index, cmdLineArgs[index])
+      print ("cmdLineArgs[%s] = '%s'" % (index, cmdLineArgs[index]))
 
   if len(cmdLineArgs) > 1 and cmdLineOptions.all:
     parser.error("No files can be specified when the -a/-all flag is "+\
@@ -93,8 +93,8 @@ def main(cmdLineArgs):
     shortNameFileList.append(os.path.basename(filename))
 
   if clo.verbose:
-    print "message: ", message
-    print "fileList:", fileList
+    print ("message: ", message)
+    print ("fileList:", fileList)
 
   msg = '"' + ", ".join(shortNameFileList) + ": " + message + '"'
 
@@ -109,8 +109,8 @@ def main(cmdLineArgs):
 
   execute = True
   if not clo.quiet:
-    print "Command is:"
-    print cmd
+    print ("Command is:")
+    print (cmd)
     if not clo.force:
       answer = raw_input("Execute [y/n]? ")
       if not answer:
@@ -118,26 +118,26 @@ def main(cmdLineArgs):
       if answer[0].lower() != 'y':
         execute = False
   elif clo.verbose:
-    print "Command:"
-    print cmd
+    print ("Command:")
+    print (cmd)
 
   cmdText = "call(%s)" % cmdList
   if not execute:
-    print "Exiting..."
+    print ("Exiting...")
     return
   else:
     if not clo.noOp:
       if clo.verbose:
-        print "Executing:"
-        print cmdText
-      print
+        print ("Executing:")
+        print (cmdText)
+      print ()
       call(cmdList)
       if not clo.quiet:
-        print
+        print ()
         call(["git","--no-pager","log","--name-only","-1"])
     else:
-      print "Would have made the call:"
-      print cmdText
+      print ("Would have made the call:")
+      print (cmdText)
 
 if (__name__ == '__main__'):
   main(sys.argv[1:])
